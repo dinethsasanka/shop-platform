@@ -23,16 +23,11 @@ type Order struct {
 
 var kafkaWriter *kafka.Writer
 
-//getEnv(...) — reads settings (like "which Kafka address to use") from environment variables, falling back to a default if none is set. 
-// This is how we'll later tell the same code "use this Kafka address" locally vs. on AWS, without changing the code.
-
 func main() {
 	kafkaBroker := getEnv("KAFKA_BROKER", "localhost:9092")
 	topic := getEnv("KAFKA_TOPIC", "order-created")
 	port := getEnv("PORT", "8081")
 
-	//kafkaWriter — this is our connection to the Kafka broker. 
-	// We create it once at startup and reuse it for all requests. The defer statement ensures that the connection is closed when the program exits.
 	kafkaWriter = &kafka.Writer{
 		Addr:     kafka.TCP(kafkaBroker),
 		Topic:    topic,
@@ -40,10 +35,6 @@ func main() {
 	}
 	defer kafkaWriter.Close()
 
-	//http.NewServeMux() creates a new HTTP request multiplexer (router).
-	//mux.HandleFunc("/orders", handleCreateOrder) — "when someone sends a request to /orders, run the handleCreateOrder function." 
-	// This is called routing.
-	
 	mux := http.NewServeMux()
 	mux.HandleFunc("/orders", handleCreateOrder)
 	mux.HandleFunc("/health", handleHealth)
