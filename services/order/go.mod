@@ -11,3 +11,5 @@ require (
 	github.com/klauspost/compress v1.15.9 // indirect
 	github.com/pierrec/lz4/v4 v4.1.15 // indirect
 )
+
+//it just declares your project's name and which external libraries it needs(this is Go's equivalent of package.json)
