@@ -1,0 +1,12 @@
+# Go
+*.exe
+*.test
+*.out
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
