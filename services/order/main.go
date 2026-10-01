@@ -37,6 +37,7 @@ func main() {
 		Addr:     kafka.TCP(kafkaBroker),
 		Topic:    topic,
 		Balancer: &kafka.LeastBytes{},
+		AllowAutoTopicCreation: true, // Enable automatic topic creation
 	}
 	defer kafkaWriter.Close()
 
