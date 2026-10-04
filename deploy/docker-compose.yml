@@ -50,7 +50,7 @@ services:
     depends_on:
       kafka:
         condition: service_healthy
-  
+
   inventory-service:
     build:
       context: ../services/inventory
@@ -66,6 +66,19 @@ services:
       kafka:
         condition: service_healthy
 
+  notification-service:
+    build:
+      context: ../services/notification
+    container_name: notification-service
+    ports:
+      - "8083:8083"
+    environment:
+      - KAFKA_BROKER=kafka:9092
+      - STOCK_TOPIC=stock-updated
+      - PORT=8083
+    depends_on:
+      kafka:
+        condition: service_healthy
+
 volumes:
   kafka-data:
-
