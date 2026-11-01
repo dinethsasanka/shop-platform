@@ -40,8 +40,8 @@ type Stats struct {
 	OrdersByDay      map[string]int `json:"orders_by_day"`
 }
 
-// statsStore holds the running totals. Several goroutines update it at the
-// same time (one per partition), so a mutex allows only one change at a time.
+// statsStore holds the running totals. Several goroutines update it at once
+// (one per partition), so a mutex makes sure only one touches it at a time.
 type statsStore struct {
 	mu    sync.Mutex
 	stats Stats
@@ -91,8 +91,8 @@ func (s *statsStore) recordStock(value []byte) {
 	}
 }
 
-// snapshot returns a separate copy of the stats, so the HTTP handler can
-// convert it to JSON while the goroutines continue to update the original.
+// snapshot returns a copy of the stats, so the HTTP handler can turn it into
+// JSON without racing against the goroutines that are still updating it.
 func (s *statsStore) snapshot() Stats {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -110,8 +110,9 @@ func main() {
 	stockTopic := getEnv("STOCK_TOPIC", "stock-updated")
 	port := getEnv("PORT", "8084")
 
-	// Read both topics in the background. Each call receives the function
-	// that handles one message (in Go, a function can be passed as a value).
+	// Read both topics in the background. We pass in the function that
+	// should handle each message (in Go, functions can be passed around
+	// like any other value).
 	go readFromStart(kafkaBroker, orderTopic, store.recordOrder)
 	go readFromStart(kafkaBroker, stockTopic, store.recordStock)
 
@@ -125,16 +126,16 @@ func main() {
 	}
 }
 
-// readFromStart reads every partition of a topic from the oldest stored
-// message, then keeps waiting for new messages.
+// readFromStart reads a topic from its very first message, then keeps
+// waiting for new ones.
 //
-// Unlike inventory and notification, this service has no GroupID (no consumer
-// group). Kafka therefore stores no committed offsets for it: every time the
-// service starts, it reads all messages again and rebuilds its totals.
+// Unlike inventory and notification, there's NO GroupID here. So Kafka keeps
+// no bookmark for us: every time this service starts, it reads everything
+// again from the beginning and rebuilds its totals.
 func readFromStart(broker, topic string, handle func([]byte)) {
 	for _, partition := range partitionsOf(broker, topic) {
-		// Kafka assigns partitions only to consumer groups,
-		// so this service opens one reader per partition itself.
+		// Without a group, Kafka doesn't hand us partitions,
+		// so we open one reader per partition ourselves.
 		reader := kafka.NewReader(kafka.ReaderConfig{
 			Brokers:   []string{broker},
 			Topic:     topic,
@@ -142,7 +143,7 @@ func readFromStart(broker, topic string, handle func([]byte)) {
 			MinBytes:  1,
 			MaxBytes:  10e6,
 		})
-		if err := reader.SetOffset(kafka.FirstOffset); err != nil { // start at the oldest stored message
+		if err := reader.SetOffset(kafka.FirstOffset); err != nil { // start at the first message
 			log.Printf("could not rewind %s partition %d: %v", topic, partition, err)
 		}
 		log.Printf("reading %s partition %d from the start", topic, partition)
