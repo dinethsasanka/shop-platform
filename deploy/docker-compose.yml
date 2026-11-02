@@ -97,7 +97,16 @@ services:
     depends_on:
       - order-service
       - inventory-service
-      - analytics-service
+      - analytics-
+
+  frontend:
+    build:
+      context: ../frontend
+    container_name: frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - gateway
 
 volumes:
   kafka-data:
