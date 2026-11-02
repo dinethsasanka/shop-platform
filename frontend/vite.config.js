@@ -7,7 +7,7 @@ export default defineConfig({
   server: {
     proxy: {
       // Forward every request that starts with /api to the gateway.
-      '/api': 'http://localhost:8000',
+      '/api': 'http://localhost:3000',
     },
   },
 })

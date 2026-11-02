@@ -2,8 +2,6 @@ services:
   kafka:
     image: apache/kafka:3.9.1
     container_name: kafka
-    ports:
-      - "9092:9092"
     environment:
       KAFKA_NODE_ID: 1
       KAFKA_PROCESS_ROLES: broker,controller
@@ -87,8 +85,6 @@ services:
     build:
       context: ../services/gateway
     container_name: gateway
-    ports:
-      - "8000:8000"
     environment:
       - PORT=8000
       - ORDER_SERVICE_URL=http://order-service:8081
@@ -97,7 +93,7 @@ services:
     depends_on:
       - order-service
       - inventory-service
-      - analytics-
+      - analytics-service
 
   frontend:
     build:
